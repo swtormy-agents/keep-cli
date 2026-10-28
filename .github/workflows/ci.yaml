@@ -8,8 +8,13 @@ on:
     branches: [main, feat/*]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
