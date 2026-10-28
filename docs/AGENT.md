@@ -4,8 +4,10 @@
 
 1. Install the `keep` binary ([README](../README.md)).
 2. Set `KEEP_API_KEY` or create `~/.config/keep/config.json` with `chmod 600`.
-3. Run `keep status` — exit `0` with `"has_key": true` means the key is loaded.
-4. For writes, the user runs `keep access write --confirm write` in a real terminal (not in the agent sandbox).
+3. Run `keep status` — exit **0** always when the CLI runs; check `"has_key": true` and `"access"`. Exit **3** only if a key is set but `/whoami` fails. Exit **4** is not returned by `keep status`.
+4. For writes: prefer `keep access write --confirm write` in a human terminal. Non-interactive opt-in: `KEEP_ACCESS=write` (stderr notice on first write) or `"access":"write"` in `config.json`.
+
+Write-access precedence: `KEEP_ACCESS` → `~/.config/keep/access` → `access` in config.json → default read-only.
 
 ## Command table
 
@@ -51,7 +53,7 @@ Global flags: `--dry-run`, `--jq`, `--pretty`, `--format json|table`, `--api-url
 |---------|-------|-----|
 | exit 3, `KEEP_API_KEY is not set` | No key in env or config | Export key or write config file |
 | exit 3, HTTP 401/403 | Key revoked or wrong tenant | Rotate key in Keep settings |
-| exit 4 on dismiss/run | Read-only mode | User runs `keep access write --confirm write` |
+| exit 4 on dismiss/run | Read-only mode | `keep access write --confirm write`, or `KEEP_ACCESS=write`, or `"access":"write"` in config |
 | Empty `workflows executions` | Upstream API/spec mismatch | Use `keep workflows runs WORKFLOW_ID` |
 | `unknown command` | Stale binary | Rebuild or `go install` latest |
 

@@ -21,7 +21,8 @@ func (a *app) statusCmd() *cobra.Command {
 			out := map[string]any{
 				"ok":       true,
 				"api_url":  a.cfg.APIURL,
-				"access":   keep.ReadAccessMode(a.getenv),
+				"access":   a.cfg.Access,
+				"access_via": a.cfg.AccessSource,
 				"has_key":  a.cfg.APIKey != "",
 				"key_from": a.cfg.Source,
 			}
@@ -53,8 +54,10 @@ func (a *app) accessCmd() *cobra.Command {
 		Use:   "show",
 		Short: "Print current access mode (read or write)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			mode := keep.ReadAccessMode(a.getenv)
-			return a.emitValue(map[string]any{"ok": true, "access": mode})
+			if err := a.loadConfig(); err != nil {
+				return err
+			}
+			return a.emitValue(map[string]any{"ok": true, "access": a.cfg.Access, "access_via": a.cfg.AccessSource})
 		},
 	})
 	var confirm string

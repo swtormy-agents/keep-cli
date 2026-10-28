@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -90,6 +91,8 @@ type app struct {
 	format  string
 	apiURL  string
 	timeout time.Duration
+
+	accessWarnOnce sync.Once
 }
 
 func Execute(args []string, stdin io.Reader, stdout, stderr io.Writer, getenv func(string) string) int {
@@ -119,7 +122,7 @@ func (a *app) reportError(err error) int {
 	if ee.api != nil {
 		detail["status"] = ee.api.Status
 		if ee.api.Message != "" {
-			detail["message"] = ee.api.Message
+			detail["message"] = a.redact(ee.api.Message)
 		}
 	}
 	b, _ := marshal(struct {
@@ -143,7 +146,6 @@ func (a *app) loadConfig() error {
 		cfg.APIURL = a.apiURL
 	}
 	a.cfg = cfg
-	a.cfg.Access = keep.ReadAccessMode(a.getenv)
 	return nil
 }
 
@@ -214,6 +216,7 @@ func (a *app) requireWrite(action string) error {
 		return err
 	}
 	if strings.EqualFold(a.cfg.Access, "write") {
+		a.warnWriteAccessSource()
 		return nil
 	}
 	return policyErr(fmt.Sprintf("%s is blocked while access is read-only: ask the user to run `keep access write` in their own terminal", action))
@@ -268,8 +271,17 @@ Auth
 Safety
   State-changing commands require write access. Default is read-only.
   The user enables writes with: keep access write  (interactive, needs a TTY)
+  Non-interactive opt-in (CI/agents): export KEEP_ACCESS=write (see README)
 
 Exit codes: 0 ok, 1 API/runtime, 2 usage, 3 auth, 4 blocked by access policy`
+
+func (a *app) warnWriteAccessSource() {
+	a.accessWarnOnce.Do(func() {
+		if strings.EqualFold(a.cfg.AccessSource, "KEEP_ACCESS") && strings.EqualFold(a.cfg.Access, "write") {
+			fmt.Fprintln(a.errOut, "keep: write access enabled via KEEP_ACCESS (non-interactive opt-in; see README)")
+		}
+	})
+}
 
 func defaultIsTTY() bool {
 	f, err := os.Stderr.Stat()

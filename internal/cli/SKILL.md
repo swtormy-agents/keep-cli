@@ -16,15 +16,17 @@ description: Query and manage Keep (AIOps) alerts, incidents, workflows, and pro
 
 ## Check setup first
 
-Run `keep status`. Handle the exit code:
+Run `keep status`. It exits **0** when the CLI is configured (even if `"has_key": false`). It exits **3** only when a key is present but `GET /whoami` rejects it.
 
-| Code | Meaning | What to do |
-|------|---------|------------|
-| 0 | OK | Continue |
-| 3 | Missing or rejected API key | User must set `KEEP_API_KEY` or config file |
-| 4 | Read-only policy | User must run `keep access write` locally |
-| 1 | API/runtime | Show `error.message` from stderr JSON |
-| 2 | Usage | Fix flags and retry |
+| Code | When | What to do |
+|------|------|------------|
+| 0 | `keep status` succeeded | Continue (check `"has_key"` and `"access"` in JSON) |
+| 3 | Missing key on an API call, or auth failure from the API | User sets `KEEP_API_KEY` or config file |
+| 4 | A **write** command while access is read-only | User runs `keep access write` locally, or sets `KEEP_ACCESS=write` for non-interactive opt-in |
+| 1 | API/runtime error | Show redacted `error.message` from stderr JSON |
+| 2 | Usage error | Fix flags and retry |
+
+Exit code **4 does not come from** `keep status` — only from blocked write commands.
 
 ## Reading
 

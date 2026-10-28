@@ -38,7 +38,9 @@ Alternatively, store credentials in a config file (mode `600`, directory mode `7
 }
 ```
 
-Override the config path with `KEEP_CONFIG`. A project-local `.keep/config.json` is also read.
+Optional `"access": "write"` in the same file enables writes without a TTY (lower precedence than `KEEP_ACCESS` and the `~/.config/keep/access` file). Prefer `keep access write` for interactive use.
+
+Override the config path with `KEEP_CONFIG`. A project-local `.keep/config.json` is also read. On Unix, `keep` warns on stderr if a loaded config file is group/world-readable.
 
 Check setup:
 
@@ -61,13 +63,13 @@ Filter JSON with `--jq` or pipe to `jq`. Use `--format table` for human-readable
 
 ## Write access
 
-State-changing commands (enrich, assign, dismiss, incident updates, workflow runs, mutating `keep api` calls) are **read-only by default**. The user must enable writes locally:
+State-changing commands (enrich, assign, dismiss, incident updates, workflow runs, mutating `keep api` calls) are **read-only by default**. Enable writes in one of these ways (highest precedence first):
 
-```bash
-keep access write --confirm write
-```
+1. **`KEEP_ACCESS=write`** — non-interactive opt-in for CI or sandboxes. The CLI prints a one-line notice on stderr the first time a write runs.
+2. **`keep access write --confirm write`** — interactive; requires a TTY (recommended for humans).
+3. **`"access": "write"` in `config.json`** — persistent non-interactive opt-in (use with care).
 
-Agents should not run this; ask the user to do it in their own terminal. Return to read-only with `keep access read`.
+Return to read-only with `keep access read` or `KEEP_ACCESS=read`.
 
 ## Agent skill
 

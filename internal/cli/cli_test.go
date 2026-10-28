@@ -165,3 +165,60 @@ func TestUsageError(t *testing.T) {
 		t.Fatalf("%s", errOut)
 	}
 }
+
+func TestAuthErrorRedactsAPIKey(t *testing.T) {
+	const secret = "test-key-12345"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"detail":"invalid key ` + secret + `"}`))
+	}))
+	defer srv.Close()
+
+	getenv := func(k string) string {
+		switch k {
+		case "KEEP_API_KEY":
+			return secret
+		case "KEEP_API_URL":
+			return srv.URL
+		default:
+			return ""
+		}
+	}
+	var out, errOut bytes.Buffer
+	code := Execute([]string{"status"}, strings.NewReader(""), &out, &errOut, getenv)
+	if code != exitAuth {
+		t.Fatalf("code=%d stdout=%s stderr=%s", code, out.String(), errOut.String())
+	}
+	if strings.Contains(errOut.String(), secret) {
+		t.Fatalf("stderr leaked key: %s", errOut.String())
+	}
+}
+
+func TestKeepAccessWriteNotice(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	defer srv.Close()
+
+	getenv := func(k string) string {
+		switch k {
+		case "KEEP_API_KEY":
+			return "test-key-12345"
+		case "KEEP_API_URL":
+			return srv.URL
+		case "KEEP_ACCESS":
+			return "write"
+		default:
+			return ""
+		}
+	}
+	var out, errOut bytes.Buffer
+	code := Execute([]string{"alerts", "dismiss", "--fingerprint", "a", "--last-received", "t", "--dry-run"}, strings.NewReader(""), &out, &errOut, getenv)
+	if code != 0 {
+		t.Fatalf("code=%d stderr=%s", code, errOut.String())
+	}
+	if !strings.Contains(errOut.String(), "KEEP_ACCESS") {
+		t.Fatalf("expected KEEP_ACCESS notice, stderr=%q", errOut.String())
+	}
+}

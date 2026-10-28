@@ -130,7 +130,7 @@ func (c *Client) Do(ctx context.Context, r Request) (json.RawMessage, error) {
 		return nil, fmt.Errorf("read response: %s", c.Redact(err.Error()))
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		msg := extractMessage(data)
+		msg := c.Redact(extractMessage(data))
 		return nil, &APIError{Status: resp.StatusCode, Body: data, Message: msg}
 	}
 	if len(data) == 0 {

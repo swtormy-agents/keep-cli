@@ -15,10 +15,11 @@ type File struct {
 }
 
 type Config struct {
-	APIURL string
-	APIKey string
-	Access string
-	Source string
+	APIURL       string
+	APIKey       string
+	Access       string
+	AccessSource string
+	Source       string
 }
 
 func LoadConfig(getenv func(string) string) (Config, error) {
@@ -33,9 +34,6 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 			cfg.Source = "KEEP_API_KEY"
 		}
 	}
-	if v := getenv("KEEP_ACCESS"); v != "" {
-		cfg.Access = v
-	}
 	for _, path := range configPaths(getenv) {
 		f, err := readConfigFile(path)
 		if err != nil {
@@ -44,6 +42,7 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 			}
 			return Config{}, err
 		}
+		auditConfigFilePerm(path)
 		if cfg.APIURL == "" && f.APIURL != "" {
 			cfg.APIURL = f.APIURL
 			cfg.Source = path
@@ -54,13 +53,13 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 				cfg.Source = path
 			}
 		}
-		if cfg.Access == "read" && f.Access != "" {
-			cfg.Access = f.Access
-		}
 	}
 	if cfg.APIURL == "" {
 		cfg.APIURL = DefaultBaseURL
 	}
+	mode, src := EffectiveAccess(getenv)
+	cfg.Access = mode
+	cfg.AccessSource = src
 	if cfg.Access == "" {
 		cfg.Access = "read"
 	}
@@ -111,23 +110,18 @@ func WriteAccessMode(mode string) error {
 	return os.WriteFile(path, []byte(mode), 0o600)
 }
 
-func ReadAccessMode(getenv func(string) string) string {
-	if v := getenv("KEEP_ACCESS"); v != "" {
-		return v
+// WriteConfigFile writes a config JSON with mode 0600 (parent dir 0700).
+func WriteConfigFile(path string, f File) error {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
 	}
-	dir, err := ConfigDir()
+	b, err := json.MarshalIndent(f, "", "  ")
 	if err != nil {
-		return "read"
+		return err
 	}
-	b, err := os.ReadFile(filepath.Join(dir, "access"))
-	if err != nil {
-		return "read"
-	}
-	m := string(bytesTrimSpace(b))
-	if m == "" {
-		return "read"
-	}
-	return m
+	b = append(b, '\n')
+	return os.WriteFile(path, b, 0o600)
 }
 
 func bytesTrimSpace(b []byte) []byte {
