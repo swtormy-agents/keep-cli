@@ -1,6 +1,6 @@
 module github.com/swtormy-agents/keep-cli
 
-go 1.22
+go 1.27.3
 
 require (
 	github.com/itchyny/gojq v0.12.17

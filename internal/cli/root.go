@@ -277,8 +277,22 @@ Exit codes: 0 ok, 1 API/runtime, 2 usage, 3 auth, 4 blocked by access policy`
 
 func (a *app) warnWriteAccessSource() {
 	a.accessWarnOnce.Do(func() {
-		if strings.EqualFold(a.cfg.AccessSource, "KEEP_ACCESS") && strings.EqualFold(a.cfg.Access, "write") {
-			fmt.Fprintln(a.errOut, "keep: write access enabled via KEEP_ACCESS (non-interactive opt-in; see README)")
+		if !strings.EqualFold(a.cfg.Access, "write") {
+			return
+		}
+		var msg string
+		switch a.cfg.AccessSource {
+		case "KEEP_ACCESS":
+			msg = "keep: write access enabled via KEEP_ACCESS (non-interactive opt-in; see README)"
+		case "access file":
+			msg = "keep: write access enabled via ~/.config/keep/access (non-interactive opt-in; see README)"
+		case "default":
+			return
+		default:
+			msg = fmt.Sprintf("keep: write access enabled via %q access field in config (non-interactive opt-in; see README)", a.cfg.AccessSource)
+		}
+		if msg != "" {
+			fmt.Fprintln(a.errOut, msg)
 		}
 	})
 }

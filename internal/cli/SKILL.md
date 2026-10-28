@@ -14,6 +14,8 @@ description: Query and manage Keep (AIOps) alerts, incidents, workflows, and pro
 3. **Access changes belong to the human.** Never run `keep access write` or `keep access read`. Never ask for API keys in chat — tell the user to set `KEEP_API_KEY` or `~/.config/keep/config.json` with `chmod 600`.
 4. Do not read or print files in `~/.config/keep/` except via `keep status`.
 
+Non-interactive write opt-in (each prints a stderr warning on first write): `KEEP_ACCESS=write`, `"access":"write"` in config.json, or `~/.config/keep/access` containing `write`.
+
 ## Check setup first
 
 Run `keep status`. It exits **0** when the CLI is configured (even if `"has_key": false`). It exits **3** only when a key is present but `GET /whoami` rejects it.
