@@ -2,6 +2,8 @@ module github.com/swtormy-agents/keep-cli
 
 go 1.27.3
 
+toolchain go1.27.3
+
 require (
 	github.com/itchyny/gojq v0.12.17
 	github.com/spf13/cobra v1.9.1
