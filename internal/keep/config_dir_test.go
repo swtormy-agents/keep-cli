@@ -1,7 +1,6 @@
 package keep
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 )
