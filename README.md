@@ -4,11 +4,28 @@ Agent-friendly CLI for [Keep](https://github.com/keephq/keep) (AIOps). One stati
 
 ## Install
 
+### Download a binary from GitHub Releases
+
+1. Open [GitHub Releases](https://github.com/swtormy-agents/keep-cli/releases) and download the archive for your OS/arch (`keep_<version>_linux_amd64.tar.gz`, `darwin_arm64`, `windows_amd64.zip`, etc.).
+2. Verify the SHA256 checksum against `checksums.txt` on the same release:
+
+```bash
+sha256sum -c checksums.txt --ignore-missing   # Linux
+# or
+shasum -a 256 -c checksums.txt                # macOS
+```
+
+3. Extract the archive. It contains `keep` (or `keep.exe`), `LICENSE`, `NOTICE`, and `THIRD_PARTY_NOTICES`.
+
+Releases are published as **drafts** first; pick the latest draft or published release from the maintainer.
+
+### Go install
+
 ```bash
 go install github.com/swtormy-agents/keep-cli/cmd/keep@latest
 ```
 
-Or build from source:
+### Build from source
 
 ```bash
 git clone https://github.com/swtormy-agents/keep-cli.git
@@ -97,4 +114,4 @@ go build ./cmd/keep
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Third-party notices in [NOTICE](NOTICE).
+MIT — see [LICENSE](LICENSE). Third-party notices in [NOTICE](NOTICE) and [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES).
