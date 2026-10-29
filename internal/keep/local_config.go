@@ -30,5 +30,17 @@ func applyLocalConfigFile(cfg *Config, path string, f File) {
 		if cfg.Source == "" {
 			cfg.Source = path
 		}
+		if LocalConfigWarn != nil {
+			LocalConfigWarn(fmt.Sprintf(
+				"keep: using api_key from project-local config %s",
+				path,
+			))
+		}
+	}
+}
+
+func warnLocalConfigUnreadable(path string) {
+	if LocalConfigWarn != nil {
+		LocalConfigWarn(fmt.Sprintf("keep: skipping unreadable project-local config %s", path))
 	}
 }

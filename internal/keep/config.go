@@ -40,6 +40,10 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 			if errors.Is(err, os.ErrNotExist) {
 				continue
 			}
+			if isLocalProjectConfig(path) {
+				warnLocalConfigUnreadable(path)
+				continue
+			}
 			return Config{}, err
 		}
 		auditConfigFilePerm(path)

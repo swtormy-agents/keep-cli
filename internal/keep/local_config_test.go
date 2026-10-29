@@ -119,6 +119,7 @@ func TestLocalConfigIgnoredWithHomeConfigAPIKey(t *testing.T) {
 
 func TestLocalConfigAPIKeyWhenNoTrustedKey(t *testing.T) {
 	root := t.TempDir()
+	isolateHomeConfig(t, root)
 	writeLocalConfig(t, root, File{
 		APIKey: "project-key",
 		APIURL: "https://evil.example",
@@ -135,7 +136,8 @@ func TestLocalConfigAPIKeyWhenNoTrustedKey(t *testing.T) {
 	}
 	defer func() { _ = os.Chdir(origWD) }()
 
-	cfg, err := LoadConfig(func(string) string { return "" })
+	getenv := isolatedGetenv(t, root)
+	cfg, err := LoadConfig(getenv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +147,79 @@ func TestLocalConfigAPIKeyWhenNoTrustedKey(t *testing.T) {
 	if cfg.APIURL != DefaultBaseURL {
 		t.Fatalf("APIURL=%q want default", cfg.APIURL)
 	}
-	if len(warnings) == 0 || !strings.Contains(warnings[0], "api_url") {
+	var sawIgnore, sawKeyUse bool
+	for _, w := range warnings {
+		if strings.Contains(w, "api_url") {
+			sawIgnore = true
+		}
+		if strings.Contains(w, "using api_key from project-local config") {
+			sawKeyUse = true
+		}
+		if strings.Contains(w, "project-key") {
+			t.Fatalf("warning must not contain api key: %q", w)
+		}
+	}
+	if !sawIgnore || !sawKeyUse {
 		t.Fatalf("warnings=%v", warnings)
+	}
+}
+
+func TestLocalConfigMalformedSkipped(t *testing.T) {
+	root := t.TempDir()
+	isolateHomeConfig(t, root)
+	keepDir := filepath.Join(root, ".keep")
+	if err := os.MkdirAll(keepDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(keepDir, "config.json"), []byte("{not-json"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	oldWarn := LocalConfigWarn
+	var warnings []string
+	LocalConfigWarn = func(msg string) { warnings = append(warnings, msg) }
+	defer func() { LocalConfigWarn = oldWarn }()
+
+	origWD, _ := os.Getwd()
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.Chdir(origWD) }()
+
+	cfg, err := LoadConfig(isolatedGetenv(t, root))
+	if err != nil {
+		t.Fatalf("LoadConfig: %v", err)
+	}
+	if cfg.APIKey != "" {
+		t.Fatalf("APIKey=%q", cfg.APIKey)
+	}
+	if len(warnings) != 1 || !strings.Contains(warnings[0], "skipping unreadable project-local config") {
+		t.Fatalf("warnings=%v", warnings)
+	}
+	if strings.Contains(warnings[0], "not-json") {
+		t.Fatalf("warning leaked file contents: %q", warnings[0])
+	}
+}
+
+func isolateHomeConfig(t *testing.T, root string) {
+	t.Helper()
+	home := filepath.Join(root, "home")
+	configDir := filepath.Join(home, "keep")
+	if err := os.MkdirAll(configDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("KEEP_CONFIG_DIR", configDir)
+}
+
+func isolatedGetenv(t *testing.T, root string) func(string) string {
+	t.Helper()
+	configDir := filepath.Join(root, "home", "keep")
+	return func(k string) string {
+		if k == "KEEP_CONFIG_DIR" {
+			return configDir
+		}
+		return ""
 	}
 }
