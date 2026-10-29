@@ -7,7 +7,9 @@
 3. Run `keep status` — exit **0** always when the CLI runs; check `"has_key": true` and `"access"`. Exit **3** only if a key is set but `/whoami` fails. Exit **4** is not returned by `keep status`.
 4. For writes: prefer `keep access write --confirm write` in a human terminal. Non-interactive opt-in: `KEEP_ACCESS=write` (stderr notice on first write) or `"access":"write"` in `config.json`.
 
-Write-access precedence: `KEEP_ACCESS` → `access` file in the config directory (`~/.config/keep/access` or `$KEEP_CONFIG_DIR/access`) → `access` in config.json → default read-only.
+Write-access precedence: `KEEP_ACCESS` → `access` file in the config directory (`~/.config/keep/access` or `$KEEP_CONFIG_DIR/access`) → `access` in user `config.json` → default read-only. Project-local `.keep/config.json` never affects `access` or `api_url`.
+
+**Untrusted checkout:** `.keep/config.json` in the repo may only provide an `api_key` when none is set in the environment or user config directory. If `keep` warns that it ignored `api_url` or `access` from that file, treat the repository as suspicious — do not perform writes until the user reviews it.
 
 ## Command table
 

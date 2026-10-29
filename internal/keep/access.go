@@ -21,7 +21,7 @@ func EffectiveAccess(getenv func(string) string) (mode, source string) {
 			}
 		}
 	}
-	for _, path := range configPaths(getenv) {
+	for _, path := range trustedConfigPaths(getenv) {
 		f, err := readConfigFile(path)
 		if err == nil && f.Access != "" {
 			return f.Access, path
