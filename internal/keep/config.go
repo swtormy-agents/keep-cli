@@ -91,6 +91,13 @@ func readConfigFile(path string) (File, error) {
 }
 
 func ConfigDir() (string, error) {
+	return configDirFrom(os.Getenv)
+}
+
+func configDirFrom(getenv func(string) string) (string, error) {
+	if v := getenv("KEEP_CONFIG_DIR"); v != "" {
+		return v, nil
+	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err

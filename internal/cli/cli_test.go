@@ -213,18 +213,16 @@ func TestAuthErrorRedactsAPIKey(t *testing.T) {
 }
 
 func TestWriteAccessWarningFromAccessFile(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	accessDir := filepath.Join(home, ".config", "keep")
-	if err := os.MkdirAll(accessDir, 0o700); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(accessDir, "access"), []byte("write\n"), 0o600); err != nil {
+	configDir := t.TempDir()
+	t.Setenv("KEEP_CONFIG_DIR", configDir)
+	if err := os.WriteFile(filepath.Join(configDir, "access"), []byte("write\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
 	getenv := func(k string) string {
 		switch k {
+		case "KEEP_CONFIG_DIR":
+			return configDir
 		case "KEEP_API_KEY":
 			return "test-key-12345"
 		case "KEEP_API_URL":
