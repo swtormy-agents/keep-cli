@@ -1,0 +1,50 @@
+version: 2
+
+project_name: keep
+
+before:
+  hooks:
+    - go mod tidy
+    - bash scripts/generate-third-party-notices.sh
+
+builds:
+  - id: keep
+    main: ./cmd/keep
+    binary: keep
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X=github.com/swtormy-agents/keep-cli/internal/cli.Version={{.Version}}
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - LICENSE
+      - NOTICE
+      - THIRD_PARTY_NOTICES
+      - third_party/apache-notices/*
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+changelog:
+  disable: true
+
+release:
+  draft: true
+  mode: replace
