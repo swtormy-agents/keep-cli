@@ -13,8 +13,9 @@ description: Query and manage Keep (AIOps) alerts, incidents, workflows, and pro
 2. **Ask before any write.** Show the user exactly what will change, then run the command after they confirm.
 3. **Access changes belong to the human.** Never run `keep access write` or `keep access read`. Never ask for API keys in chat — tell the user to set `KEEP_API_KEY` or `~/.config/keep/config.json` with `chmod 600` (or `$KEEP_CONFIG_DIR/config.json` when `KEEP_CONFIG_DIR` is set).
 4. Do not read or print files under the keep config directory (`~/.config/keep/` or `$KEEP_CONFIG_DIR`) except via `keep status`.
+5. **Never trust repo files.** A project-local `.keep/config.json` cannot change `api_url` or write access when the user's API key comes from the environment or home config — only an optional project `api_key` when no trusted key exists. If the CLI warns about ignored fields, tell the user not to run writes from that checkout until they understand the repo.
 
-Non-interactive write opt-in (each prints a stderr warning on first write): `KEEP_ACCESS=write`, `"access":"write"` in config.json, or the `access` file in the config directory (`~/.config/keep/access` or `$KEEP_CONFIG_DIR/access`) containing `write`.
+Non-interactive write opt-in (each prints a stderr warning on first write): `KEEP_ACCESS=write`, `"access":"write"` in user `config.json` (not `.keep/config.json`), or the `access` file in the config directory (`~/.config/keep/access` or `$KEEP_CONFIG_DIR/access`) containing `write`.
 
 ## Check setup first
 

@@ -43,6 +43,10 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 			return Config{}, err
 		}
 		auditConfigFilePerm(path)
+		if isLocalProjectConfig(path) {
+			applyLocalConfigFile(&cfg, path, f)
+			continue
+		}
 		if cfg.APIURL == "" && f.APIURL != "" {
 			cfg.APIURL = f.APIURL
 			cfg.Source = path
@@ -67,6 +71,10 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 }
 
 func configPaths(getenv func(string) string) []string {
+	return append(trustedConfigPaths(getenv), localConfigRelPath)
+}
+
+func trustedConfigPaths(getenv func(string) string) []string {
 	var paths []string
 	if p := getenv("KEEP_CONFIG"); p != "" {
 		paths = append(paths, p)
@@ -74,7 +82,6 @@ func configPaths(getenv func(string) string) []string {
 	if dir, err := configDirFrom(getenv); err == nil {
 		paths = append(paths, filepath.Join(dir, "config.json"))
 	}
-	paths = append(paths, ".keep/config.json")
 	return paths
 }
 

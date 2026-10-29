@@ -103,6 +103,9 @@ func Execute(args []string, stdin io.Reader, stdout, stderr io.Writer, getenv fu
 		in: stdin, out: stdout, errOut: stderr, getenv: getenv,
 		isTTY: defaultIsTTY, format: "json",
 	}
+	keep.LocalConfigWarn = func(msg string) {
+		fmt.Fprintln(stderr, msg)
+	}
 	root := a.rootCmd()
 	root.SetArgs(args)
 	root.SetOut(stdout)

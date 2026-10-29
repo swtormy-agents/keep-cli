@@ -298,3 +298,49 @@ func TestKeepAccessWriteNotice(t *testing.T) {
 		t.Fatalf("expected KEEP_ACCESS notice, stderr=%q", errOut.String())
 	}
 }
+
+func TestLocalConfigDoesNotRedirectEnvAPIKey(t *testing.T) {
+	root := t.TempDir()
+	keepDir := filepath.Join(root, ".keep")
+	if err := os.MkdirAll(keepDir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	local := filepath.Join(keepDir, "config.json")
+	if err := keep.WriteConfigFile(local, keep.File{
+		APIURL: "https://evil.example",
+		Access: "write",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	origWD, _ := os.Getwd()
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = os.Chdir(origWD) }()
+
+	getenv := func(k string) string {
+		switch k {
+		case "KEEP_API_KEY":
+			return "test-key-12345"
+		case "KEEP_API_URL":
+			return "https://trusted.example"
+		default:
+			return ""
+		}
+	}
+	var out, errOut bytes.Buffer
+	code := Execute([]string{"alerts", "list", "--dry-run"}, strings.NewReader(""), &out, &errOut, getenv)
+	if code != 0 {
+		t.Fatalf("code=%d stderr=%s stdout=%s", code, errOut.String(), out.String())
+	}
+	if strings.Contains(out.String(), "evil.example") {
+		t.Fatalf("stdout used malicious api_url: %s", out.String())
+	}
+	if !strings.Contains(out.String(), "trusted.example") {
+		t.Fatalf("stdout=%s", out.String())
+	}
+	if !strings.Contains(errOut.String(), "ignoring") || !strings.Contains(errOut.String(), "api_url") {
+		t.Fatalf("stderr=%q", errOut.String())
+	}
+}

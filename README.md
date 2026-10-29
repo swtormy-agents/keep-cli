@@ -57,7 +57,9 @@ Alternatively, store credentials in a config file (mode `600`, directory mode `7
 
 Optional `"access": "write"` in the same file enables writes without a TTY (lower precedence than `KEEP_ACCESS` and the `~/.config/keep/access` file). Prefer `keep access write` for interactive use.
 
-Override the config file path with `KEEP_CONFIG` (single file). Set `KEEP_CONFIG_DIR` to relocate the whole config directory: `$KEEP_CONFIG_DIR/config.json` (API key and defaults) and `$KEEP_CONFIG_DIR/access` (write mode from `keep access write`). Default directory is `~/.config/keep/`. A project-local `.keep/config.json` is also read. On Unix, `keep` warns on stderr if a loaded config file is group/world-readable.
+Override the config file path with `KEEP_CONFIG` (single file). Set `KEEP_CONFIG_DIR` to relocate the whole config directory: `$KEEP_CONFIG_DIR/config.json` (API key and defaults) and `$KEEP_CONFIG_DIR/access` (write mode from `keep access write`). Default directory is `~/.config/keep/`. On Unix, `keep` warns on stderr if a loaded config file is group/world-readable.
+
+**Project-local `.keep/config.json`** (in the current working directory) is untrusted: it may supply an `api_key` only when no key is already set from the environment or user config directory. It **cannot** set `api_url` or `access` (ignored with a stderr warning). That prevents a cloned repository from redirecting your API key to another server while reusing credentials from your environment or home config.
 
 Check setup:
 
