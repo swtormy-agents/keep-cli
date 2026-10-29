@@ -36,14 +36,19 @@ archives:
       - LICENSE
       - NOTICE
       - THIRD_PARTY_NOTICES
-      - third_party/apache-notices/*
+      - third_party/apache-notices/*.NOTICE
 
 checksum:
   name_template: checksums.txt
   algorithm: sha256
 
 changelog:
-  disable: true
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^chore:'
+      - '^test:'
 
 release:
   draft: true

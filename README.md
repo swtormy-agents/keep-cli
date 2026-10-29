@@ -57,7 +57,7 @@ Alternatively, store credentials in a config file (mode `600`, directory mode `7
 
 Optional `"access": "write"` in the same file enables writes without a TTY (lower precedence than `KEEP_ACCESS` and the `~/.config/keep/access` file). Prefer `keep access write` for interactive use.
 
-Override the config path with `KEEP_CONFIG`. A project-local `.keep/config.json` is also read. On Unix, `keep` warns on stderr if a loaded config file is group/world-readable.
+Override the config file path with `KEEP_CONFIG` (single file). Set `KEEP_CONFIG_DIR` to relocate the whole config directory: `$KEEP_CONFIG_DIR/config.json` (API key and defaults) and `$KEEP_CONFIG_DIR/access` (write mode from `keep access write`). Default directory is `~/.config/keep/`. A project-local `.keep/config.json` is also read. On Unix, `keep` warns on stderr if a loaded config file is group/world-readable.
 
 Check setup:
 

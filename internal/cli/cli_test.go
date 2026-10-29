@@ -5,8 +5,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/swtormy-agents/keep-cli/internal/keep"
 )
 
 func testEnv(key string) string {
@@ -130,6 +134,20 @@ func TestDryRun(t *testing.T) {
 	}
 }
 
+func TestDryRunOutputUsesAPIKeyPlaceholder(t *testing.T) {
+	const secret = "test-key-12345"
+	out, errOut, code := runCLI(t, "", "alerts", "list", "--dry-run")
+	if code != 0 {
+		t.Fatalf("code=%d stderr=%s", code, errOut)
+	}
+	if strings.Contains(out, secret) || strings.Contains(errOut, secret) {
+		t.Fatalf("dry-run leaked API key in stdout=%q stderr=%q", out, errOut)
+	}
+	if !strings.Contains(out, "<API_KEY>") {
+		t.Fatalf("expected <API_KEY> placeholder in stdout: %s", out)
+	}
+}
+
 func TestSkillPrint(t *testing.T) {
 	out, _, code := runCLI(t, "", "skill", "print")
 	if code != 0 || !strings.Contains(out, "name: keep") {
@@ -191,6 +209,64 @@ func TestAuthErrorRedactsAPIKey(t *testing.T) {
 	}
 	if strings.Contains(errOut.String(), secret) {
 		t.Fatalf("stderr leaked key: %s", errOut.String())
+	}
+}
+
+func TestWriteAccessWarningFromAccessFile(t *testing.T) {
+	configDir := t.TempDir()
+	t.Setenv("KEEP_CONFIG_DIR", configDir)
+	if err := os.WriteFile(filepath.Join(configDir, "access"), []byte("write\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	getenv := func(k string) string {
+		switch k {
+		case "KEEP_CONFIG_DIR":
+			return configDir
+		case "KEEP_API_KEY":
+			return "test-key-12345"
+		case "KEEP_API_URL":
+			return "https://example.test"
+		default:
+			return ""
+		}
+	}
+	var out, errOut bytes.Buffer
+	code := Execute([]string{"alerts", "dismiss", "--fingerprint", "a", "--last-received", "t", "--dry-run"}, strings.NewReader(""), &out, &errOut, getenv)
+	if code != 0 {
+		t.Fatalf("code=%d stderr=%s", code, errOut.String())
+	}
+	if !strings.Contains(errOut.String(), "~/.config/keep/access") {
+		t.Fatalf("expected access-file notice, stderr=%q", errOut.String())
+	}
+}
+
+func TestWriteAccessWarningFromConfig(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.json")
+	if err := keep.WriteConfigFile(cfgPath, keep.File{Access: "write"}); err != nil {
+		t.Fatal(err)
+	}
+
+	getenv := func(k string) string {
+		switch k {
+		case "KEEP_CONFIG":
+			return cfgPath
+		case "KEEP_API_KEY":
+			return "test-key-12345"
+		case "KEEP_API_URL":
+			return "https://example.test"
+		default:
+			return ""
+		}
+	}
+	var out, errOut bytes.Buffer
+	code := Execute([]string{"alerts", "dismiss", "--fingerprint", "a", "--last-received", "t", "--dry-run"}, strings.NewReader(""), &out, &errOut, getenv)
+	if code != 0 {
+		t.Fatalf("code=%d stderr=%s", code, errOut.String())
+	}
+	if !strings.Contains(errOut.String(), "access field in config") {
+		t.Fatalf("expected config access notice, stderr=%q", errOut.String())
 	}
 }
 

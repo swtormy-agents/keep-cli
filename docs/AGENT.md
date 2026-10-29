@@ -3,11 +3,11 @@
 ## Setup
 
 1. Install the `keep` binary ([README](../README.md)).
-2. Set `KEEP_API_KEY` or create `~/.config/keep/config.json` with `chmod 600`.
+2. Set `KEEP_API_KEY` or create `~/.config/keep/config.json` with `chmod 600`. Optional: set `KEEP_CONFIG_DIR` so both `config.json` (credentials) and the `access` file live under that directory instead of `~/.config/keep/`.
 3. Run `keep status` — exit **0** always when the CLI runs; check `"has_key": true` and `"access"`. Exit **3** only if a key is set but `/whoami` fails. Exit **4** is not returned by `keep status`.
 4. For writes: prefer `keep access write --confirm write` in a human terminal. Non-interactive opt-in: `KEEP_ACCESS=write` (stderr notice on first write) or `"access":"write"` in `config.json`.
 
-Write-access precedence: `KEEP_ACCESS` → `~/.config/keep/access` → `access` in config.json → default read-only.
+Write-access precedence: `KEEP_ACCESS` → `access` file in the config directory (`~/.config/keep/access` or `$KEEP_CONFIG_DIR/access`) → `access` in config.json → default read-only.
 
 ## Command table
 

@@ -3,8 +3,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Match go.mod toolchain so go-licenses sees the same GOROOT as `go list` (avoids
+# "does not have module info" on stdlib when go-licenses was built with another Go).
+GO_LICENSES_VERSION="v2.0.1"
+GO_TOOLCHAIN="${GO_TOOLCHAIN:-go1.27.3}"
+SCAN="./cmd/keep"
+
+export GOTOOLCHAIN="$GO_TOOLCHAIN"
 if ! command -v go-licenses >/dev/null 2>&1; then
-  go install github.com/google/go-licenses/v2@v2.0.1
+  go install "github.com/google/go-licenses/v2@${GO_LICENSES_VERSION}"
 fi
 export PATH="$(go env GOPATH)/bin:$PATH"
 
@@ -18,10 +25,9 @@ while IFS=, read -r pkg lic _; do
     echo "disallowed license: $pkg ($lic)" >&2
     found=1
   fi
-done < <(go-licenses csv ./...)
+done < <(go-licenses csv "$SCAN")
 
-PATH="$(go env GOPATH)/bin:$PATH"
-if ! go-licenses check --allowed_licenses=MIT,Apache-2.0,BSD-3-Clause,BSD-2-Clause,ISC ./...; then
+if ! go-licenses check --allowed_licenses=MIT,Apache-2.0,BSD-3-Clause,BSD-2-Clause,ISC "$SCAN"; then
   found=1
 fi
 

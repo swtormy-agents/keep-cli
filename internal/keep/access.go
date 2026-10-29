@@ -5,13 +5,13 @@ import (
 	"path/filepath"
 )
 
-// EffectiveAccess resolves write policy: KEEP_ACCESS env, then ~/.config/keep/access,
-// then "access" in config.json (first matching file in search order).
+// EffectiveAccess resolves write policy: KEEP_ACCESS env, then ~/.config/keep/access
+// (or $KEEP_CONFIG_DIR/access), then "access" in config.json (first matching file in search order).
 func EffectiveAccess(getenv func(string) string) (mode, source string) {
 	if v := getenv("KEEP_ACCESS"); v != "" {
 		return v, "KEEP_ACCESS"
 	}
-	dir, err := ConfigDir()
+	dir, err := configDirFrom(getenv)
 	if err == nil {
 		b, err := os.ReadFile(filepath.Join(dir, "access"))
 		if err == nil {
