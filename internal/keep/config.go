@@ -71,8 +71,8 @@ func configPaths(getenv func(string) string) []string {
 	if p := getenv("KEEP_CONFIG"); p != "" {
 		paths = append(paths, p)
 	}
-	if home, err := os.UserHomeDir(); err == nil {
-		paths = append(paths, filepath.Join(home, ".config", "keep", "config.json"))
+	if dir, err := configDirFrom(getenv); err == nil {
+		paths = append(paths, filepath.Join(dir, "config.json"))
 	}
 	paths = append(paths, ".keep/config.json")
 	return paths

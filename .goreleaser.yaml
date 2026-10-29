@@ -37,8 +37,6 @@ archives:
       - NOTICE
       - THIRD_PARTY_NOTICES
       - third_party/apache-notices/*.NOTICE
-    ignore:
-      - third_party/apache-notices/.gitkeep
 
 checksum:
   name_template: checksums.txt
