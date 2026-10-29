@@ -36,6 +36,10 @@ jobs:
           cache: true
       - name: Check dependency licenses (no GPL/AGPL)
         run: bash scripts/check-licenses.sh
+      - name: Verify THIRD_PARTY_NOTICES is up to date
+        run: |
+          bash scripts/generate-third-party-notices.sh
+          git diff --exit-code -- THIRD_PARTY_NOTICES third_party/apache-notices/
 
   test:
     needs: licenses
